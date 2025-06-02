@@ -206,13 +206,17 @@ _File: ./i18n/index.js_
 _A string, for Example: "en"_
 We use the `defaultLang` property to set the default language. Remember, this language key needs to be available in your translation configuration.
 
+##### defaultLangFallback
+_Either `true` or `false`_
+If you use `true`, we fall back to the translation from the `defaultLang` before falling back to the key itself if there is no translation in the selected language.
+
 ##### languageDataStore
 _Either `"localStorage"` or `"query"`_
 With the configuration property `languageDataStore`, you tell `next-export-i18n` to either add a `query` parameter (default) `lang` to your URLs or store the selected language in the browser's `localStorage`. 
 
 ##### useBrowserDefault
 _Either `true` or `false`_
-If you use `true`, we use the browser's language instead of the configuration's `defaultLang` to determine the default language setting. Remember that `next-export-i18n` considers only the primary subtag, e.g., `en-US` from the will be read as `en` and will use the translations you added under èn`in the `i18n/index.js`file.
+If you use `true`, we use the browser's language instead of the configuration's `defaultLang` to determine the default language setting. Remember that `next-export-i18n` first checks the full tag in lowercase, e.g., `en-US` will be read as `en-us` and will use the translations you added under `en-us` in the `i18n/index.js` file. If those do not exist, it will consider the primary subtag, e.g., `en-US` will be read as `en` and will use the translations you added under `en` in the `i18n/index.js` file.
 
 
 ### The `LinkWithLocale` Component

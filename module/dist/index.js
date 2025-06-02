@@ -35,14 +35,16 @@ const getDefaultLanguage = (userI18n) => {
         window.navigator &&
         (window.navigator.languages || window.navigator.language)) {
         browserLang = ((window.navigator.languages && window.navigator.languages[0]) ||
-            window.navigator.language)
-            .split("-")[0]
-            .toLowerCase();
+            window.navigator.language).toLowerCase();
     }
-    if (userI18n.useBrowserDefault &&
-        browserLang &&
-        userI18n.translations[browserLang]) {
-        return browserLang;
+    if (userI18n.useBrowserDefault && browserLang) {
+        if (userI18n.translations[browserLang]) {
+            return browserLang;
+        }
+        const baseLang = browserLang.split("-")[0];
+        if (userI18n.translations[baseLang]) {
+            return baseLang;
+        }
     }
     return userI18n.defaultLang;
 };
@@ -183,7 +185,14 @@ const useTranslation = () => {
     let i18nObj;
     i18nObj = i18n();
     const translations = i18nObj.translations;
+    const defaultLang = i18nObj.defaultLang;
+    const defaultLangFallback = i18nObj.defaultLangFallback || false;
     const { lang } = useSelectedLanguage();
+    const getLanguageValue = (key, lang) => {
+        return key
+            .split('.')
+            .reduce((previous, current) => (previous && previous[current]) || null, translations[lang]);
+    };
     return {
         /**
          * Returns the value stored for this given key (e.g. "i18n.ui.headline")  in the translation file.
@@ -194,10 +203,9 @@ const useTranslation = () => {
          * @returns the value stored for this key, could be a string, a number, an array or an object
          */
         t: (key, view) => {
-            let value = key
-                .split(".")
-                .reduce((previous, current) => (previous && previous[current]) || null, translations[lang]);
-            let translation = value || key;
+            let selectedLangTranslation = getLanguageValue(key, lang);
+            let fallbackTranslation = defaultLangFallback ? getLanguageValue(key, defaultLang) || key : key;
+            let translation = selectedLangTranslation || fallbackTranslation;
             try {
                 return Mustache__default["default"].render(translation, view);
             }
@@ -291,16 +299,17 @@ function LinkWithLocale(props) {
     const { href, ...rest } = props;
     const link = React.useMemo(() => {
         const inputHref = href.toString();
-        if (inputHref.includes("?lang=") ||
-            inputHref.includes("&lang=") ||
-            languageDataStore === LanguageDataStore.LOCAL_STORAGE) {
+        try {
+            const url = new URL(inputHref, document.baseURI);
+            if (url.searchParams.has("lang") ||
+                languageDataStore === LanguageDataStore.LOCAL_STORAGE) {
+                return inputHref;
+            }
+            url.searchParams.set("lang", lang);
+            return url.toString();
+        }
+        catch (_e) {
             return inputHref;
-        }
-        if (inputHref.includes("?")) {
-            return `${inputHref}&lang=${lang}`;
-        }
-        else {
-            return `${inputHref}?lang=${lang}`;
         }
     }, [href, lang]);
     return React__default["default"].createElement(Link__default["default"], { href: link, ...rest });
