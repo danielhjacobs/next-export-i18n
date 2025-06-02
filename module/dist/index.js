@@ -54,12 +54,16 @@ const getDefaultLanguage = (userI18n) => {
  * to the custom hooks
  * @returns the translations and the default language as defined in "i18n/index"
  */
-const i18n = () => {
+const i18n$1 = () => {
     // cast to be typsafe
     const userI18n = I18N;
     // Set "query" as default
     if (!userI18n.languageDataStore) {
         userI18n.languageDataStore = LanguageDataStore.QUERY;
+    }
+    // Set false as default
+    if (!userI18n.defaultLangFallback) {
+        userI18n.defaultLangFallback = false;
     }
     if (Object.keys(userI18n.translations).length < 1) {
         throw new Error(`Missing translations. Did you import and add the tranlations in 'i18n/index.js'?`);
@@ -84,7 +88,7 @@ const i18n = () => {
  * @returns [lang as string, setLang as SetStateAction] a react-state containing the currently selected language
  */
 function useSelectedLanguage() {
-    const i18nObj = i18n();
+    const i18nObj = i18n$1();
     const defaultLang = i18nObj.defaultLang;
     const translations = i18nObj.translations;
     const languageDataStore = i18nObj.languageDataStore;
@@ -133,7 +137,7 @@ function useSelectedLanguage() {
  */
 function useLanguageSwitcherIsActive(currentLang) {
     const [isActive, setIsActive] = React.useState(false);
-    const i18nObj = i18n();
+    const i18nObj = i18n$1();
     const searchParams = navigation.useSearchParams();
     const langParam = searchParams.get("lang");
     const defaultLang = i18nObj.defaultLang;
@@ -174,6 +178,44 @@ function useLanguageSwitcherIsActive(currentLang) {
     return { isActive };
 }
 
+var data$1 = { language_tag:"de",
+  "default":true,
+  i18n:{ ui:{ languageSwitcher:"Sprache wählen: " },
+    nav:{ nyc:{ text:"Gehe zu New York City",
+        route:"/nyc" },
+      index:{ text:"Gehe zu Paris",
+        route:"/" } },
+    index:{ headline:"Paris / Frankreich",
+      copy:"Paris ist die Hauptstadt der Französischen Republik und Hauptort der Region Île-de-France. Mit rund 2,18 Millionen Einwohnern ist Paris die viertgrößte Stadt der Europäischen Union sowie mit über 12,5 Millionen Menschen die größte Metropolregion der EU",
+      imageCredits:"Photo by Egie Aroa from Pexels" },
+    nyc:{ headline:"New York City / USA",
+      copy:"New York City (Abkürzung: NYC) ist eine Weltstadt an der Ostküste der Vereinigten Staaten. Sie liegt im Bundesstaat New York und ist mit rund 8,3 Millionen Einwohnern die bevölkerungsreichste Stadt der Vereinigten Staaten.",
+      imageCredits:"Photo by Lukas Rodriguez from Pexels" } } };
+
+var data = { language_tag:"en",
+  "default":false,
+  i18n:{ ui:{ languageSwitcher:"Choose Language: " },
+    nav:{ nyc:{ text:"Go to New York City",
+        route:"/nyc" },
+      index:{ text:"Got To Paris",
+        route:"/" } },
+    index:{ headline:"Paris / France",
+      copy:"Paris is the capital and most populous city of France, with an estimated population of 2,175,601 residents as of 2018, in an area of more than 105 square kilometres (41 square miles). Since the 17th century, Paris has been one of Europe's major centres of finance, diplomacy, commerce, fashion, gastronomy, science, and arts.",
+      imageCredits:"Photo by Egie Aroa from Pexels" },
+    nyc:{ headline:"New York City / USA",
+      copy:"New York City, or NYC for short, is the most populous city in the United States. With an estimated 2020 population of 8,253,213 distributed over about 302.6 square miles (784 km2), New York City is also the most densely populated major city in the United States.",
+      imageCredits:"Photo by Lukas Rodriguez from Pexels" } } };
+
+// @ts-ignore
+const i18n = {
+    translations: {
+        en: data.i18n,
+        de: data$1.i18n,
+    },
+    defaultLang: "de",
+    useBrowserDefault: true,
+};
+
 /**
  * Provides the t() function which returns the value stored for this given key (e.g. "i18n.ui.headline")
  * in the translation file.
@@ -183,10 +225,11 @@ function useLanguageSwitcherIsActive(currentLang) {
  */
 const useTranslation = () => {
     let i18nObj;
-    i18nObj = i18n();
+    i18nObj = i18n$1();
     const translations = i18nObj.translations;
-    const defaultLang = i18nObj.defaultLang;
-    const defaultLangFallback = i18nObj.defaultLangFallback || false;
+    const originalI18nObj = i18n;
+    const defaultLang = originalI18nObj.defaultLang;
+    const defaultLangFallback = i18nObj.defaultLangFallback;
     const { lang } = useSelectedLanguage();
     const getLanguageValue = (key, lang) => {
         return key
@@ -233,7 +276,7 @@ const LanguageSwitcher = ({ lang, children }) => {
     const router = navigation.useRouter();
     const pathname = navigation.usePathname();
     const searchParams = navigation.useSearchParams();
-    const i18nObj = i18n();
+    const i18nObj = i18n$1();
     const languageDataStore = i18nObj.languageDataStore;
     const createQueryString = React.useCallback((name, value) => {
         const params = new URLSearchParams(searchParams.toString());
@@ -294,7 +337,7 @@ const LanguageSwitcher = ({ lang, children }) => {
  */
 function LinkWithLocale(props) {
     const { lang } = useSelectedLanguage();
-    const i18nObj = i18n();
+    const i18nObj = i18n$1();
     const languageDataStore = i18nObj.languageDataStore;
     const { href, ...rest } = props;
     const link = React.useMemo(() => {
@@ -317,7 +360,7 @@ function LinkWithLocale(props) {
 
 exports.LanguageSwitcher = LanguageSwitcher;
 exports.LinkWithLocale = LinkWithLocale;
-exports["default"] = i18n;
+exports["default"] = i18n$1;
 exports.useLanguageSwitcherIsActive = useLanguageSwitcherIsActive;
 exports.useSelectedLanguage = useSelectedLanguage;
 exports.useTranslation = useTranslation;
